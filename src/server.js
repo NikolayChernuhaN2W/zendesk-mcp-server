@@ -38,13 +38,33 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
       ...chatTools
     ];
 
-    // Register each tool with the server
+    const readOnly = process.env.ZENDESK_READ_ONLY === 'true';
+
+    // Derive MCP tool annotations from the naming convention so clients can
+    // tell reads from writes and prompt before destructive calls
+    function getAnnotations(name) {
+      if (name.startsWith('delete_') || name.startsWith('update_')) {
+        return { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true };
+      }
+      if (name.startsWith('create_')) {
+        return { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
+      }
+      return { readOnlyHint: true, openWorldHint: true };
+    }
+
+    // Register each tool with the server, skipping write tools in read-only mode
     allTools.forEach(tool => {
-      server.tool(
+      const annotations = getAnnotations(tool.name);
+      if (readOnly && !annotations.readOnlyHint) return;
+
+      server.registerTool(
         tool.name,
-        tool.schema,
-        tool.handler,
-        { description: tool.description }
+        {
+          description: tool.description,
+          inputSchema: tool.schema,
+          annotations
+        },
+        tool.handler
       );
     });
 

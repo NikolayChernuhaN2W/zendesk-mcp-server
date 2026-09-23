@@ -1,0 +1,275 @@
+{
+  "manifest_version": "0.2",
+  "name": "zendesk-mcp-server",
+  "display_name": "Zendesk",
+  "version": "1.0.0",
+  "description": "Search and manage Zendesk tickets, users, organizations, and Help Center articles.",
+  "long_description": "Connects Claude to your Zendesk account. Read-only mode is on by default: Claude can look things up but can't create, change, or delete anything. Turn it off in the extension settings only if you need Claude to make changes.",
+  "author": {
+    "name": "N2WS"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "src/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/src/index.js"
+      ],
+      "env": {
+        "ZENDESK_SUBDOMAIN": "${user_config.subdomain}",
+        "ZENDESK_EMAIL": "${user_config.email}",
+        "ZENDESK_API_TOKEN": "${user_config.api_token}",
+        "ZENDESK_READ_ONLY": "${user_config.read_only}",
+        "ZENDESK_ALLOW_ADMIN_ROLE": "${user_config.allow_admin_role}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "list_tickets",
+      "description": "List tickets in Zendesk"
+    },
+    {
+      "name": "get_ticket",
+      "description": "Get a specific ticket by ID"
+    },
+    {
+      "name": "create_ticket",
+      "description": "Create a new ticket"
+    },
+    {
+      "name": "update_ticket",
+      "description": "Update an existing ticket"
+    },
+    {
+      "name": "delete_ticket",
+      "description": "Delete a ticket"
+    },
+    {
+      "name": "list_users",
+      "description": "List users in Zendesk"
+    },
+    {
+      "name": "get_user",
+      "description": "Get a specific user by ID"
+    },
+    {
+      "name": "create_user",
+      "description": "Create a new user"
+    },
+    {
+      "name": "update_user",
+      "description": "Update an existing user"
+    },
+    {
+      "name": "delete_user",
+      "description": "Delete a user"
+    },
+    {
+      "name": "list_organizations",
+      "description": "List organizations in Zendesk"
+    },
+    {
+      "name": "get_organization",
+      "description": "Get a specific organization by ID"
+    },
+    {
+      "name": "create_organization",
+      "description": "Create a new organization"
+    },
+    {
+      "name": "update_organization",
+      "description": "Update an existing organization"
+    },
+    {
+      "name": "delete_organization",
+      "description": "Delete an organization"
+    },
+    {
+      "name": "list_groups",
+      "description": "List agent groups in Zendesk"
+    },
+    {
+      "name": "get_group",
+      "description": "Get a specific group by ID"
+    },
+    {
+      "name": "create_group",
+      "description": "Create a new agent group"
+    },
+    {
+      "name": "update_group",
+      "description": "Update an existing group"
+    },
+    {
+      "name": "delete_group",
+      "description": "Delete a group"
+    },
+    {
+      "name": "list_macros",
+      "description": "List macros in Zendesk"
+    },
+    {
+      "name": "get_macro",
+      "description": "Get a specific macro by ID"
+    },
+    {
+      "name": "create_macro",
+      "description": "Create a new macro"
+    },
+    {
+      "name": "update_macro",
+      "description": "Update an existing macro"
+    },
+    {
+      "name": "delete_macro",
+      "description": "Delete a macro"
+    },
+    {
+      "name": "list_views",
+      "description": "List views in Zendesk"
+    },
+    {
+      "name": "get_view",
+      "description": "Get a specific view by ID"
+    },
+    {
+      "name": "create_view",
+      "description": "Create a new view"
+    },
+    {
+      "name": "update_view",
+      "description": "Update an existing view"
+    },
+    {
+      "name": "delete_view",
+      "description": "Delete a view"
+    },
+    {
+      "name": "list_triggers",
+      "description": "List triggers in Zendesk"
+    },
+    {
+      "name": "get_trigger",
+      "description": "Get a specific trigger by ID"
+    },
+    {
+      "name": "create_trigger",
+      "description": "Create a new trigger"
+    },
+    {
+      "name": "update_trigger",
+      "description": "Update an existing trigger"
+    },
+    {
+      "name": "delete_trigger",
+      "description": "Delete a trigger"
+    },
+    {
+      "name": "list_automations",
+      "description": "List automations in Zendesk"
+    },
+    {
+      "name": "get_automation",
+      "description": "Get a specific automation by ID"
+    },
+    {
+      "name": "create_automation",
+      "description": "Create a new automation"
+    },
+    {
+      "name": "update_automation",
+      "description": "Update an existing automation"
+    },
+    {
+      "name": "delete_automation",
+      "description": "Delete an automation"
+    },
+    {
+      "name": "search",
+      "description": "Search across Zendesk data"
+    },
+    {
+      "name": "list_articles",
+      "description": "List Help Center articles"
+    },
+    {
+      "name": "get_article",
+      "description": "Get a specific Help Center article by ID"
+    },
+    {
+      "name": "create_article",
+      "description": "Create a new Help Center article"
+    },
+    {
+      "name": "update_article",
+      "description": "Update an existing Help Center article"
+    },
+    {
+      "name": "delete_article",
+      "description": "Delete a Help Center article"
+    },
+    {
+      "name": "support_info",
+      "description": "Get information about Zendesk Support configuration"
+    },
+    {
+      "name": "get_talk_stats",
+      "description": "Get Zendesk Talk statistics"
+    },
+    {
+      "name": "list_chats",
+      "description": "List Zendesk Chat conversations"
+    }
+  ],
+  "keywords": [
+    "zendesk",
+    "support",
+    "tickets"
+  ],
+  "license": "MIT",
+  "user_config": {
+    "subdomain": {
+      "type": "string",
+      "title": "Zendesk subdomain",
+      "required": true,
+      "description": "The part before .zendesk.com in your Zendesk address. For https://acme.zendesk.com, enter acme."
+    },
+    "email": {
+      "type": "string",
+      "title": "Zendesk email",
+      "required": true,
+      "description": "The email address you sign in to Zendesk with."
+    },
+    "api_token": {
+      "type": "string",
+      "title": "Zendesk API token",
+      "required": true,
+      "sensitive": true,
+      "description": "Create one in Zendesk Admin Center under Apps and integrations > APIs > Zendesk API."
+    },
+    "read_only": {
+      "type": "boolean",
+      "title": "Read-only mode",
+      "default": true,
+      "description": "When on, Claude can only look things up. Turn off to let Claude create, change, and delete Zendesk data."
+    },
+    "allow_admin_role": {
+      "type": "boolean",
+      "title": "Allow granting admin role",
+      "default": false,
+      "description": "Lets Claude make users Zendesk admins. Leave off unless you need it."
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

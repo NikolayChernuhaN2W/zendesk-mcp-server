@@ -1,6 +1,11 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
 
+    // Granting admin is off by default so a prompt-injected ticket can't escalate privileges
+    const assignableRoles = process.env.ZENDESK_ALLOW_ADMIN_ROLE === 'true'
+      ? ["end-user", "agent", "admin"]
+      : ["end-user", "agent"];
+
     export const usersTools = [
       {
         name: "list_users",
@@ -57,7 +62,7 @@ import { z } from 'zod';
         schema: {
           name: z.string().describe("User's full name"),
           email: z.string().email().describe("User's email address"),
-          role: z.enum(["end-user", "agent", "admin"]).optional().describe("User's role"),
+          role: z.enum(assignableRoles).optional().describe("User's role"),
           phone: z.string().optional().describe("User's phone number"),
           organization_id: z.number().optional().describe("ID of the user's organization"),
           tags: z.array(z.string()).optional().describe("Tags for the user"),
@@ -97,7 +102,7 @@ import { z } from 'zod';
           id: z.number().describe("User ID to update"),
           name: z.string().optional().describe("Updated user's name"),
           email: z.string().email().optional().describe("Updated email address"),
-          role: z.enum(["end-user", "agent", "admin"]).optional().describe("Updated user's role"),
+          role: z.enum(assignableRoles).optional().describe("Updated user's role"),
           phone: z.string().optional().describe("Updated phone number"),
           organization_id: z.number().optional().describe("Updated organization ID"),
           tags: z.array(z.string()).optional().describe("Updated tags for the user"),

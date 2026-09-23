@@ -29,6 +29,11 @@
        ZENDESK_EMAIL=your-email@example.com
        ZENDESK_API_TOKEN=your-api-token
        ```
+    4. Optionally, restrict what the server can do:
+       - `ZENDESK_READ_ONLY=true` registers only read tools (list, get, search); every create, update and delete tool is left out.
+       - `ZENDESK_ALLOW_ADMIN_ROLE=true` lets `create_user` and `update_user` grant the `admin` role. It is off by default.
+
+       Ticket and article content is written by customers and can contain prompt-injection attempts. Use read-only mode unless you need writes, and use an API token from the least-privileged account that works.
 
     ### Running the Server
 
@@ -41,6 +46,25 @@
     ```
     npm run dev
     ```
+
+    ### Claude Desktop extension
+
+    Build the one-click `.mcpb` installer into `dist/`:
+    ```
+    scripts/release.sh build                 # read-only mode on by default
+    scripts/release.sh build --allow-writes  # read-only mode off by default
+    scripts/release.sh build --all           # both
+    ```
+
+    Publish it as a release on this repo (tagged `v<version>` from `package.json`). This needs a Forgejo access token with the `write:repository` scope:
+    ```
+    scripts/release.sh publish                 # read-only mode on by default
+    scripts/release.sh publish --allow-writes  # read-only mode off by default
+    scripts/release.sh publish --all           # both, on the same release
+    ```
+    Before publishing, add a `## v<version>` section to [RELEASE_NOTES.md](RELEASE_NOTES.md), written for the people installing the extension. It becomes the release description, and publishing stops if it's missing.
+
+    It uses `FORGEJO_TOKEN` if set and asks for the token otherwise. Publishing a second variant for the same version adds it to the existing release. Commit and push first: the release is tagged at the current commit.
 
     ### Testing with MCP Inspector
 

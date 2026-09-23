@@ -11,6 +11,7 @@ test('htmlToText strips tags, keeps structure, decodes entities', () => {
   assert.equal(htmlToText('Tom &amp; Jerry &lt;3 &#8217; &#x2014; &unknown;'), 'Tom & Jerry <3 ’ — &unknown;');
   assert.equal(htmlToText(null), '');
   assert.equal(htmlToText(''), '');
+  assert.equal(htmlToText('<p dir="ltr">Step one.</p><p class="x">Step two.</p>'), 'Step one.\n\nStep two.');
 });
 
 test('truncate shortens long text and says how much was cut', () => {

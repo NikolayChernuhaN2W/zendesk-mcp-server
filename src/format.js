@@ -2,6 +2,7 @@
 // dozens of fields and HTML bodies that use up the model's context quickly.
 
 const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const BLOCK_TAGS = 'p|div|h[1-6]|blockquote|pre|table|tr|ul|ol';
 
 export function htmlToText(html) {
   if (!html) return '';
@@ -9,8 +10,8 @@ export function htmlToText(html) {
     .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<li[^>]*>/gi, '\n- ')
-    .replace(/<(p|div|h[1-6]|blockquote|pre|table|ul|ol)>/gi, '\n')
-    .replace(/<\/(p|div|h[1-6]|tr|table|ul|ol|blockquote|pre)>/gi, '\n')
+    .replace(new RegExp(`<(?:${BLOCK_TAGS})\\b[^>]*>`, 'gi'), '\n')
+    .replace(new RegExp(`<\/(?:${BLOCK_TAGS})>`, 'gi'), '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
       if (entity[0] === '#') {

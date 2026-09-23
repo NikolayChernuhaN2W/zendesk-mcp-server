@@ -1,5 +1,6 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
+    import { jsonResult, summarizeArticle } from '../format.js';
 
     export const helpCenterTools = [
       {
@@ -15,12 +16,11 @@ import { z } from 'zod';
           try {
             const params = { page, per_page, sort_by, sort_order };
             const result = await zendeskClient.listArticles(params);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult({
+              articles: result.articles.map(article => summarizeArticle(article)),
+              count: result.count,
+              next_page: result.next_page
+            });
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error listing articles: ${error.message}` }],
@@ -33,17 +33,13 @@ import { z } from 'zod';
         name: "get_article",
         description: "Get a specific Help Center article by ID",
         schema: {
-          id: z.number().describe("Article ID")
+          id: z.number().describe("Article ID"),
+          raw: z.boolean().optional().describe("Return the full Zendesk API object (HTML body) instead of a summary")
         },
-        handler: async ({ id }) => {
+        handler: async ({ id, raw = false }) => {
           try {
             const result = await zendeskClient.getArticle(id);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult(raw ? result : summarizeArticle(result.article, { bodyLength: Infinity }));
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error getting article: ${error.message}` }],

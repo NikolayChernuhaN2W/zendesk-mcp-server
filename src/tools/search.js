@@ -1,5 +1,6 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
+    import { jsonResult, summarizeTicket } from '../format.js';
 
     export const searchTools = [
       {
@@ -16,12 +17,11 @@ import { z } from 'zod';
           try {
             const params = { sort_by, sort_order, page, per_page };
             const result = await zendeskClient.search(query, params);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult({
+              results: result.results.map(item => item.result_type === 'ticket' ? summarizeTicket(item) : item),
+              count: result.count,
+              next_page: result.next_page
+            });
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error searching: ${error.message}` }],

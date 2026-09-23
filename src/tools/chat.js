@@ -1,5 +1,6 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
+    import { jsonResult, summarizeTicket } from '../format.js';
 
     export const chatTools = [
       {
@@ -16,12 +17,11 @@ import { z } from 'zod';
             // messaging conversation is also a ticket, so search for those instead
             const search = ['type:ticket via:chat via:native_messaging', query].filter(Boolean).join(' ');
             const result = await zendeskClient.search(search, { page, per_page, sort_by: 'created_at', sort_order: 'desc' });
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult({
+              chats: result.results.map(ticket => summarizeTicket(ticket)),
+              count: result.count,
+              next_page: result.next_page
+            });
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error listing chats: ${error.message}` }],

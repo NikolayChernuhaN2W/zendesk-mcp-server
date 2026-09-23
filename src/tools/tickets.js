@@ -1,5 +1,6 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
+    import { jsonResult, summarizeTicket } from '../format.js';
 
     export const ticketsTools = [
       {
@@ -15,12 +16,11 @@ import { z } from 'zod';
           try {
             const params = { page, per_page, sort_by, sort_order };
             const result = await zendeskClient.listTickets(params);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult({
+              tickets: result.tickets.map(ticket => summarizeTicket(ticket)),
+              count: result.count,
+              next_page: result.next_page
+            });
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error listing tickets: ${error.message}` }],
@@ -33,17 +33,13 @@ import { z } from 'zod';
         name: "get_ticket",
         description: "Get a specific ticket by ID",
         schema: {
-          id: z.number().describe("Ticket ID")
+          id: z.number().describe("Ticket ID"),
+          raw: z.boolean().optional().describe("Return the full Zendesk API object instead of a summary")
         },
-        handler: async ({ id }) => {
+        handler: async ({ id, raw = false }) => {
           try {
             const result = await zendeskClient.getTicket(id);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult(raw ? result : summarizeTicket(result.ticket, { descriptionLength: Infinity }));
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error getting ticket: ${error.message}` }],

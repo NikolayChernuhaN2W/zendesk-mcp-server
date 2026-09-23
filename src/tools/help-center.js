@@ -1,6 +1,49 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
     import { jsonResult, summarizeArticle } from '../format.js';
+    import { collectPages } from '../pagination.js';
+
+    function byPosition(a, b) {
+      return (a.position ?? 0) - (b.position ?? 0);
+    }
+
+    // Per-section article counts: { articles, drafts, last_updated }
+    function countArticles(articles) {
+      const counts = new Map();
+      for (const article of articles) {
+        const count = counts.get(article.section_id) || { articles: 0, drafts: 0 };
+        count.articles++;
+        if (article.draft) count.drafts++;
+        if (!count.last_updated || article.updated_at > count.last_updated) count.last_updated = article.updated_at;
+        counts.set(article.section_id, count);
+      }
+      return counts;
+    }
+
+    // Categories → sections → subsections; counts is null when not requested
+    function buildTree(categories, sections, counts) {
+      const sectionNode = section => {
+        const children = sections.filter(child => child.parent_section_id === section.id).sort(byPosition).map(sectionNode);
+        return {
+          id: section.id,
+          name: section.name,
+          html_url: section.html_url,
+          ...(counts ? (counts.get(section.id) || { articles: 0, drafts: 0 }) : {}),
+          ...(children.length ? { sections: children } : {})
+        };
+      };
+
+      return [...categories].sort(byPosition).map(category => {
+        const topLevel = sections.filter(section => section.category_id === category.id && !section.parent_section_id);
+        const children = topLevel.sort(byPosition).map(sectionNode);
+        return {
+          id: category.id,
+          name: category.name,
+          html_url: category.html_url,
+          ...(children.length ? { sections: children } : {})
+        };
+      });
+    }
 
     export const helpCenterTools = [
       {
@@ -82,6 +125,38 @@ import { z } from 'zod';
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error searching articles: ${error.message}` }],
+              isError: true
+            };
+          }
+        }
+      },
+      {
+        name: "get_help_center_structure",
+        description: "Get the Help Center's categories, sections and subsections as a tree, with article counts and last-updated dates per section, to see which areas are thin or stale",
+        schema: {
+          include_article_counts: z.boolean().optional().describe("Count articles per section (default true; lists every article, so slower on large Help Centers)")
+        },
+        handler: async ({ include_article_counts = true }) => {
+          try {
+            const [categories, sections] = await Promise.all([
+              collectPages(params => zendeskClient.listCategories(params), 'categories'),
+              collectPages(params => zendeskClient.listSections(params), 'sections')
+            ]);
+            const articles = include_article_counts
+              ? (await collectPages(params => zendeskClient.listArticles(params), 'articles')).items
+              : null;
+
+            return jsonResult({
+              categories: buildTree(categories.items, sections.items, articles && countArticles(articles)),
+              totals: {
+                categories: categories.items.length,
+                sections: sections.items.length,
+                ...(articles ? { articles: articles.length } : {})
+              }
+            });
+          } catch (error) {
+            return {
+              content: [{ type: "text", text: `Error getting Help Center structure: ${error.message}` }],
               isError: true
             };
           }

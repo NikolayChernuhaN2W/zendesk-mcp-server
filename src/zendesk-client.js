@@ -227,6 +227,14 @@ import axios from 'axios';
       }
 
       // Help Center
+      async listCategories(params) {
+        return this.request('GET', '/help_center/categories.json', null, params);
+      }
+
+      async listSections(params) {
+        return this.request('GET', '/help_center/sections.json', null, params);
+      }
+
       async listArticles(params) {
         return this.request('GET', '/help_center/articles.json', null, params);
       }

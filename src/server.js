@@ -1,18 +1,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
     import { zendeskClient } from './zendesk-client.js';
-    import { ticketsTools } from './tools/tickets.js';
-    import { usersTools } from './tools/users.js';
-    import { organizationsTools } from './tools/organizations.js';
-    import { groupsTools } from './tools/groups.js';
-    import { macrosTools } from './tools/macros.js';
-    import { viewsTools } from './tools/views.js';
-    import { triggersTools } from './tools/triggers.js';
-    import { automationsTools } from './tools/automations.js';
-    import { searchTools } from './tools/search.js';
-    import { helpCenterTools } from './tools/help-center.js';
-    import { supportTools } from './tools/support.js';
-    import { talkTools } from './tools/talk.js';
-    import { chatTools } from './tools/chat.js';
+    import { allTools } from './tools/index.js';
+    import { getAnnotations, selectTools } from './tool-registry.js';
 
     // Create an MCP server for Zendesk API
     const server = new McpServer({
@@ -21,48 +10,16 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
       description: "MCP Server for interacting with the Zendesk API"
     });
 
-    // Register all tools
-    const allTools = [
-      ...ticketsTools,
-      ...usersTools,
-      ...organizationsTools,
-      ...groupsTools,
-      ...macrosTools,
-      ...viewsTools,
-      ...triggersTools,
-      ...automationsTools,
-      ...searchTools,
-      ...helpCenterTools,
-      ...supportTools,
-      ...talkTools,
-      ...chatTools
-    ];
-
     const readOnly = process.env.ZENDESK_READ_ONLY === 'true';
 
-    // Derive MCP tool annotations from the naming convention so clients can
-    // tell reads from writes and prompt before destructive calls
-    function getAnnotations(name) {
-      if (name.startsWith('delete_') || name.startsWith('update_')) {
-        return { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true };
-      }
-      if (name.startsWith('create_')) {
-        return { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
-      }
-      return { readOnlyHint: true, openWorldHint: true };
-    }
-
-    // Register each tool with the server, skipping write tools in read-only mode
-    allTools.forEach(tool => {
-      const annotations = getAnnotations(tool.name);
-      if (readOnly && !annotations.readOnlyHint) return;
-
+    // Register each tool with the server, skipping Zendesk writes in read-only mode
+    selectTools(allTools, { readOnly }).forEach(tool => {
       server.registerTool(
         tool.name,
         {
           description: tool.description,
           inputSchema: tool.schema,
-          annotations
+          annotations: getAnnotations(tool)
         },
         tool.handler
       );

@@ -70,6 +70,10 @@ import axios from 'axios';
         return this.request('DELETE', `/tickets/${id}.json`);
       }
 
+      async listTicketComments(id, params) {
+        return this.request('GET', `/tickets/${id}/comments.json`, null, params);
+      }
+
       // Users
       async listUsers(params) {
         return this.request('GET', '/users.json', null, params);

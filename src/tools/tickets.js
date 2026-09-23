@@ -1,6 +1,7 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
-    import { jsonResult, summarizeTicket } from '../format.js';
+    import { jsonResult, summarizeComment, summarizeTicket } from '../format.js';
+    import { collectTicketComments } from '../pagination.js';
 
     export const ticketsTools = [
       {
@@ -43,6 +44,32 @@ import { z } from 'zod';
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error getting ticket: ${error.message}` }],
+              isError: true
+            };
+          }
+        }
+      },
+      {
+        name: "get_ticket_comments",
+        description: "Get the conversation on a ticket: every public reply and internal note, oldest first, as plain text with author names",
+        schema: {
+          id: z.number().describe("Ticket ID"),
+          include_internal: z.boolean().optional().describe("Include internal notes (default true)"),
+          max_comments: z.number().int().positive().optional().describe("Stop after this many comments (default 200)")
+        },
+        handler: async ({ id, include_internal = true, max_comments = 200 }) => {
+          try {
+            const { comments, users, truncated } = await collectTicketComments(zendeskClient, id, { limit: max_comments });
+            return jsonResult({
+              ticket_id: id,
+              comments: comments
+                .filter(comment => include_internal || comment.public)
+                .map(comment => summarizeComment(comment, users)),
+              truncated
+            });
+          } catch (error) {
+            return {
+              content: [{ type: "text", text: `Error getting ticket comments: ${error.message}` }],
               isError: true
             };
           }

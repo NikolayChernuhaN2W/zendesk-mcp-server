@@ -45,3 +45,17 @@ test('reports API errors as tool errors', async t => {
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /^Error searching articles: /);
 });
+
+test('can list a section without search text', async t => {
+  const calls = stubZendesk(t, { 'GET /help_center/articles/search.json': response });
+  resultJson(await findTool(helpCenterTools, 'search_articles').handler({ section_id: 9 }));
+  assert.deepEqual(defined(calls[0].params), { section: 9 });
+});
+
+test('needs at least one of query, category, section or labels', async t => {
+  const calls = stubZendesk(t, { 'GET /help_center/articles/search.json': response });
+  const result = await findTool(helpCenterTools, 'search_articles').handler({ locale: 'en-us' });
+  assert.equal(result.isError, true);
+  assert.equal(result.content[0].text, 'Error searching articles: pass at least one of query, category_id, section_id or label_names');
+  assert.equal(calls.length, 0);
+});

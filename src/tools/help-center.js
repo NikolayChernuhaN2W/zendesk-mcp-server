@@ -50,9 +50,9 @@ import { z } from 'zod';
       },
       {
         name: "search_articles",
-        description: "Search Help Center articles by keyword. Returns titles, links and matching snippets; use get_article for an article's full text",
+        description: "Search Help Center articles by keyword, or list the articles in a category, section or label. Returns titles, links and matching snippets; use get_article for an article's full text",
         schema: {
-          query: z.string().describe("Words to search for"),
+          query: z.string().optional().describe("Words to search for (optional if category_id, section_id or label_names is given)"),
           locale: z.string().optional().describe("Only articles in this locale, e.g. 'en-us'"),
           category_id: z.number().optional().describe("Only articles in this category"),
           section_id: z.number().optional().describe("Only articles in this section"),
@@ -63,6 +63,7 @@ import { z } from 'zod';
         },
         handler: async ({ query, locale, category_id, section_id, label_names, updated_after, page, per_page }) => {
           try {
+            if (!query && !category_id && !section_id && !label_names?.length) throw new Error('pass at least one of query, category_id, section_id or label_names');
             const result = await zendeskClient.searchArticles({
               query,
               locale,

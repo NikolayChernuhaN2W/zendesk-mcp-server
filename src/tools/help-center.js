@@ -49,6 +49,44 @@ import { z } from 'zod';
         }
       },
       {
+        name: "search_articles",
+        description: "Search Help Center articles by keyword. Returns titles, links and matching snippets; use get_article for an article's full text",
+        schema: {
+          query: z.string().describe("Words to search for"),
+          locale: z.string().optional().describe("Only articles in this locale, e.g. 'en-us'"),
+          category_id: z.number().optional().describe("Only articles in this category"),
+          section_id: z.number().optional().describe("Only articles in this section"),
+          label_names: z.array(z.string()).optional().describe("Only articles with any of these labels (Professional and Enterprise plans only)"),
+          updated_after: z.string().optional().describe("Only articles updated after this date (YYYY-MM-DD)"),
+          page: z.number().optional().describe("Page number for pagination"),
+          per_page: z.number().optional().describe("Number of articles per page (max 100)")
+        },
+        handler: async ({ query, locale, category_id, section_id, label_names, updated_after, page, per_page }) => {
+          try {
+            const result = await zendeskClient.searchArticles({
+              query,
+              locale,
+              category: category_id,
+              section: section_id,
+              label_names: label_names?.join(','),
+              updated_after,
+              page,
+              per_page
+            });
+            return jsonResult({
+              articles: result.results.map(article => summarizeArticle(article)),
+              count: result.count,
+              next_page: result.next_page
+            });
+          } catch (error) {
+            return {
+              content: [{ type: "text", text: `Error searching articles: ${error.message}` }],
+              isError: true
+            };
+          }
+        }
+      },
+      {
         name: "create_article",
         description: "Create a new Help Center article",
         schema: {

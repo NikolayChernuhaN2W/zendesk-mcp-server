@@ -235,6 +235,10 @@ import axios from 'axios';
         return this.request('GET', `/help_center/articles/${id}.json`);
       }
 
+      async searchArticles(params) {
+        return this.request('GET', '/help_center/articles/search.json', null, params);
+      }
+
       async createArticle(data, sectionId) {
         return this.request('POST', `/help_center/sections/${sectionId}/articles.json`, { article: data });
       }

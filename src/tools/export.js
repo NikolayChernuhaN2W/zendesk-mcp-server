@@ -17,7 +17,15 @@ export const exportTools = [
     },
     handler: async args => {
       try {
-        return jsonResult(await exportTickets(zendeskClient, args));
+        const result = await exportTickets(zendeskClient, args);
+        if (result.error) {
+          // Report the failure as an error, but keep the resume value so the call can be retried
+          return {
+            content: [{ type: "text", text: `Error exporting tickets: ${result.message}\n${JSON.stringify(result)}` }],
+            isError: true
+          };
+        }
+        return jsonResult(result);
       } catch (error) {
         return {
           content: [{ type: "text", text: `Error exporting tickets: ${error.message}` }],

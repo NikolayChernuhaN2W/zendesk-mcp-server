@@ -26,6 +26,17 @@ test('export_tickets reports errors as tool errors', async t => {
   assert.match(result.content[0].text, /^Error exporting tickets: /);
 });
 
+test('a failed export call is an error result that still carries a resume value', async t => {
+  stubZendesk(t, { 'GET /search/export.json': () => { throw new Error('Zendesk API Error: 500 - {}'); } });
+  const result = await findTool(exportTools, 'export_tickets').handler({ query: 'x', file_name: 'failing' });
+  assert.equal(result.isError, true);
+  const [firstLine, json] = result.content[0].text.split('\n');
+  assert.match(firstLine, /^Error exporting tickets: Stopped after 0 tickets because of an error: Zendesk API Error: 500/);
+  const output = JSON.parse(json);
+  assert.equal(output.done, false);
+  assert.ok(output.resume);
+});
+
 test('export_tickets stays available in read-only mode and is marked as writing locally', () => {
   const tool = findTool(allTools, 'export_tickets');
   assert.ok(selectTools(allTools, { readOnly: true }).includes(tool));

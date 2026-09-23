@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+    const MAX_RETRIES = 3;
+
     class ZendeskClient {
       constructor() {
         this.subdomain = process.env.ZENDESK_SUBDOMAIN;
@@ -9,6 +11,10 @@ import axios from 'axios';
         if (!this.subdomain || !this.email || !this.apiToken) {
           console.warn('Zendesk credentials not found in environment variables. Please set ZENDESK_SUBDOMAIN, ZENDESK_EMAIL, and ZENDESK_API_TOKEN.');
         }
+
+        // Replaceable in tests
+        this.http = axios;
+        this.sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
       }
 
       getBaseUrl() {
@@ -21,31 +27,35 @@ import axios from 'axios';
       }
 
       async request(method, endpoint, data = null, params = null) {
-        try {
-          if (!this.subdomain || !this.email || !this.apiToken) {
-            throw new Error('Zendesk credentials not configured. Please set environment variables.');
+        if (!this.subdomain || !this.email || !this.apiToken) {
+          throw new Error('Zendesk credentials not configured. Please set environment variables.');
+        }
+
+        const url = `${this.getBaseUrl()}${endpoint}`;
+        const headers = {
+          'Authorization': this.getAuthHeader(),
+          'Content-Type': 'application/json'
+        };
+
+        for (let attempt = 0; ; attempt++) {
+          try {
+            const response = await this.http({ method, url, headers, data, params });
+            return response.data;
+          } catch (error) {
+            const status = error.response?.status;
+            // Rate limited: wait as long as Zendesk asks (capped), then retry
+            if (status === 429 && attempt < MAX_RETRIES) {
+              const seconds = Number(error.response.headers?.['retry-after']) || 10;
+              await this.sleep(Math.min(seconds, 60) * 1000);
+              continue;
+            }
+            if (error.response) {
+              const apiError = new Error(`Zendesk API Error: ${status} - ${JSON.stringify(error.response.data)}`);
+              apiError.status = status;
+              throw apiError;
+            }
+            throw error;
           }
-
-          const url = `${this.getBaseUrl()}${endpoint}`;
-          const headers = {
-            'Authorization': this.getAuthHeader(),
-            'Content-Type': 'application/json'
-          };
-
-          const response = await axios({
-            method,
-            url,
-            headers,
-            data,
-            params
-          });
-
-          return response.data;
-        } catch (error) {
-          if (error.response) {
-            throw new Error(`Zendesk API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
-          }
-          throw error;
         }
       }
 

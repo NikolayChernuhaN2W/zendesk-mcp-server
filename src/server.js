@@ -85,8 +85,8 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
           "search": "Search API allows you to search across Zendesk data.\nEndpoints: GET /api/v2/search, etc.",
           "help_center": "Help Center API allows you to manage articles, categories, and sections.\nEndpoints: GET /api/v2/help_center/articles, etc.",
           "support": "Support API includes core functionality for the Support product.\nEndpoints: Various endpoints for tickets, users, etc.",
-          "talk": "Talk API allows you to manage Zendesk Talk phone calls and settings.\nEndpoints: GET /api/v2/channels/voice/stats, etc.",
-          "chat": "Chat API allows you to manage Zendesk Chat conversations.\nEndpoints: GET /api/v2/chats, etc.",
+          "talk": "Talk API allows you to manage Zendesk Talk phone calls and settings.\nEndpoints: GET /api/v2/channels/voice/stats/account_overview, agents_overview, agents_activity, current_queue_activity.",
+          "chat": "Chat and messaging conversations are stored as tickets. This server finds them with the Search API.\nEndpoints: GET /api/v2/search?query=type:ticket via:chat via:native_messaging",
           "overview": "The Zendesk API is a RESTful API that uses JSON for serialization. It provides access to Zendesk Support, Talk, Chat, and Guide products."
         };
 

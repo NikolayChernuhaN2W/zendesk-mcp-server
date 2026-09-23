@@ -239,18 +239,18 @@ import axios from 'axios';
         return this.request('PUT', `/help_center/articles/${id}.json`, { article: data });
       }
 
+      // Title, body and draft state live on the translation, not the article
+      async updateArticleTranslation(id, locale, data) {
+        return this.request('PUT', `/help_center/articles/${id}/translations/${locale}.json`, { translation: data });
+      }
+
       async deleteArticle(id) {
         return this.request('DELETE', `/help_center/articles/${id}.json`);
       }
 
       // Talk
-      async getTalkStats() {
-        return this.request('GET', '/channels/voice/stats.json');
-      }
-
-      // Chat
-      async listChats(params) {
-        return this.request('GET', '/chats.json', null, params);
+      async getTalkStats(report, params) {
+        return this.request('GET', `/channels/voice/stats/${report}.json`, null, params);
       }
     }
 

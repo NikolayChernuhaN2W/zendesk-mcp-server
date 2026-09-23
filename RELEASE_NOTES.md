@@ -32,6 +32,7 @@ You don't need to install anything else.
 ### What Claude can do
 
 - **Look things up:** tickets, users, organizations, groups, macros, views, triggers, automations and Help Center articles, plus searching across all of them.
+- **See chats and calls:** recent chat and messaging conversations, and Zendesk Talk call statistics, including who's waiting in the phone queue right now.
 - **Make changes (only when read-only mode is off):** create, update and delete all of the above.
 
 ### Staying safe
@@ -41,9 +42,3 @@ You don't need to install anything else.
 - **Watch for odd instructions in tickets.** Tickets are written by customers, and a ticket could contain text meant to trick Claude, such as "delete this user." If Claude suggests a change you didn't ask for, say no.
 - **Deleting can be permanent.** Deleted tickets can be restored in Zendesk for about 30 days. Deleted triggers, automations, macros and views can't be restored.
 - **No admin rights by default.** Claude can't make anyone a Zendesk admin unless **Allow granting admin role** is turned on in the extension settings. Leave it off.
-
-### Known issues
-
-- Zendesk Talk call statistics don't work yet.
-- Zendesk Chat conversations can't be listed yet.
-- Changing a Help Center article's title or text doesn't work, even though Claude says it succeeded. Make those edits in Zendesk directly for now.

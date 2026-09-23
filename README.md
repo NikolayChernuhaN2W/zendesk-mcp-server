@@ -142,10 +142,10 @@
     - `delete_article`: Delete a Help Center article
 
     ### Talk
-    - `get_talk_stats`: Get Zendesk Talk statistics
+    - `get_talk_stats`: Get Zendesk Talk statistics (account overview, agents overview, agent activity, or live queue)
 
     ### Chat
-    - `list_chats`: List Zendesk Chat conversations
+    - `list_chats`: List chat and messaging conversations (found as tickets via search)
 
     ## Available Resources
 

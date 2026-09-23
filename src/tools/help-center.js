@@ -99,7 +99,7 @@ import { z } from 'zod';
           id: z.number().describe("Article ID to update"),
           title: z.string().optional().describe("Updated article title"),
           body: z.string().optional().describe("Updated article body content (HTML)"),
-          locale: z.string().optional().describe("Updated article locale (e.g., 'en-us')"),
+          locale: z.string().optional().describe("Which translation to update, e.g. 'en-us' (defaults to the article's source locale)"),
           draft: z.boolean().optional().describe("Whether the article is a draft"),
           permission_group_id: z.number().optional().describe("Updated permission group ID"),
           user_segment_id: z.number().optional().describe("Updated user segment ID"),
@@ -107,17 +107,32 @@ import { z } from 'zod';
         },
         handler: async ({ id, title, body, locale, draft, permission_group_id, user_segment_id, label_names }) => {
           try {
+            const translationData = {};
             const articleData = {};
-            
-            if (title !== undefined) articleData.title = title;
-            if (body !== undefined) articleData.body = body;
-            if (locale !== undefined) articleData.locale = locale;
-            if (draft !== undefined) articleData.draft = draft;
+
+            if (title !== undefined) translationData.title = title;
+            if (body !== undefined) translationData.body = body;
+            if (draft !== undefined) translationData.draft = draft;
             if (permission_group_id !== undefined) articleData.permission_group_id = permission_group_id;
             if (user_segment_id !== undefined) articleData.user_segment_id = user_segment_id;
             if (label_names !== undefined) articleData.label_names = label_names;
-            
-            const result = await zendeskClient.updateArticle(id, articleData);
+
+            if (!Object.keys(translationData).length && !Object.keys(articleData).length) {
+              return {
+                content: [{ type: "text", text: "Nothing to update: pass at least one field to change." }],
+                isError: true
+              };
+            }
+
+            const result = {};
+            if (Object.keys(translationData).length) {
+              const targetLocale = locale || (await zendeskClient.getArticle(id)).article.source_locale;
+              Object.assign(result, await zendeskClient.updateArticleTranslation(id, targetLocale, translationData));
+            }
+            if (Object.keys(articleData).length) {
+              Object.assign(result, await zendeskClient.updateArticle(id, articleData));
+            }
+
             return {
               content: [{ 
                 type: "text", 

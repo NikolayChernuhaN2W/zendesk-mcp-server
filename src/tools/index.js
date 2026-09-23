@@ -11,6 +11,7 @@ import { helpCenterTools } from './help-center.js';
 import { supportTools } from './support.js';
 import { talkTools } from './talk.js';
 import { chatTools } from './chat.js';
+import { exportTools } from './export.js';
 
 // Every tool the server offers, in registration order
 export const allTools = [
@@ -26,5 +27,6 @@ export const allTools = [
   ...helpCenterTools,
   ...supportTools,
   ...talkTools,
-  ...chatTools
+  ...chatTools,
+  ...exportTools
 ];

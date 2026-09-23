@@ -236,6 +236,11 @@ import axios from 'axios';
         return this.request('GET', '/search.json', null, { query, ...params });
       }
 
+      // Search Export API: cursor-paginated, no 1,000-result cap, needs filter[type]
+      async exportSearch(params) {
+        return this.request('GET', '/search/export.json', null, params);
+      }
+
       // Help Center
       async listCategories(params) {
         return this.request('GET', '/help_center/categories.json', null, params);

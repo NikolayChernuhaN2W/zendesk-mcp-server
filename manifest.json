@@ -21,7 +21,8 @@
         "ZENDESK_EMAIL": "${user_config.email}",
         "ZENDESK_API_TOKEN": "${user_config.api_token}",
         "ZENDESK_READ_ONLY": "${user_config.read_only}",
-        "ZENDESK_ALLOW_ADMIN_ROLE": "${user_config.allow_admin_role}"
+        "ZENDESK_ALLOW_ADMIN_ROLE": "${user_config.allow_admin_role}",
+        "ZENDESK_EXPORT_DIR": "${user_config.export_dir}"
       }
     }
   },
@@ -260,6 +261,13 @@
       "title": "Allow granting admin role",
       "default": false,
       "description": "Lets Claude make users Zendesk admins. Leave off unless you need it."
+    },
+    "export_dir": {
+      "type": "directory",
+      "title": "Export folder",
+      "description": "Where ticket exports are saved. To analyze exports in Cowork, pick the folder you use with Cowork.",
+      "default": "${HOME}/Zendesk exports",
+      "required": false
     }
   },
   "compatibility": {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { isPrerelease, parseVersion, releaseNotes } from '../scripts/release-lib.mjs';
+import { compareVersions, isPrerelease, latestVersion, nextVersion, parseVersion, releaseNotes } from '../scripts/release-lib.mjs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -30,9 +30,32 @@ test('releaseNotes returns the body of the version section', () => {
   assert.throws(() => releaseNotes('# Release notes\n\n## v1.1.0\n\n## v1.0.0\n\nOld.\n', '1.1.0'), /is empty/);
 });
 
-test('RELEASE_NOTES.md has notes for the current version', () => {
-  const pkg = JSON.parse(read('package.json'));
-  assert.ok(releaseNotes(read('RELEASE_NOTES.md'), pkg.version).length > 0);
+test('compareVersions orders versions by semver precedence', () => {
+  assert.equal(compareVersions('1.2.0', '1.10.0'), -1);
+  assert.equal(compareVersions('1.10.0', '1.2.0'), 1);
+  assert.equal(compareVersions('1.2.0-rc.1', '1.2.0'), -1);
+  assert.equal(compareVersions('1.2.0', '1.2.0-rc.1'), 1);
+  assert.equal(compareVersions('1.2.0-rc.2', '1.2.0-rc.10'), -1);
+  assert.equal(compareVersions('1.2.0-alpha', '1.2.0-beta'), -1);
+  assert.equal(compareVersions('1.2.0-1', '1.2.0-alpha'), -1);
+  assert.equal(compareVersions('1.2.0-rc', '1.2.0-rc.1'), -1);
+  assert.equal(compareVersions('1.2.0', '1.2.0'), 0);
+});
+
+test('latestVersion picks the highest stable v-prefixed tag', () => {
+  // Release tags are always v-prefixed, so a bare 1.5.0 doesn't count
+  assert.equal(latestVersion(['v1.0.0', 'v1.10.0', 'v1.9.0', 'v2.0.0-rc.1', 'junk', '1.5.0']), '1.10.0');
+  assert.equal(latestVersion(['1.5.0', 'v1.0.0']), '1.0.0');
+  assert.equal(latestVersion([]), null);
+});
+
+test('nextVersion bumps patch, minor or major', () => {
+  assert.equal(nextVersion('1.1.0', 'patch'), '1.1.1');
+  assert.equal(nextVersion('1.1.0', 'minor'), '1.2.0');
+  assert.equal(nextVersion('1.1.0', 'major'), '2.0.0');
+  assert.equal(nextVersion('1.9.9', 'minor'), '1.10.0');
+  assert.throws(() => nextVersion('1.1.0', 'bogus'),
+    { message: 'Unknown release type: bogus. Use patch, minor, major or a version like 1.4.0.' });
 });
 
 test('CI workflow has a job named test, the check main requires', () => {
@@ -45,6 +68,14 @@ test('release workflow runs on version tags and publishes with gh release create
   const release = read('.github/workflows/release.yml');
   assert.match(release, /tags:\s*\n\s*- ['"]?v\*\.\*\.\*/);
   assert.match(release, /gh release create/);
+});
+
+test('release workflow only releases tags on main and takes the version from the tag', () => {
+  const release = read('.github/workflows/release.yml');
+  assert.match(release, /merge-base --is-ancestor/);
+  assert.match(release, /fetch-depth: 0/);
+  assert.match(release, /--generate-notes/);
+  assert.doesNotMatch(release, /package\.json/);
 });
 
 // ${{ }} inside a run: script is substituted before the shell sees it, so a

@@ -264,13 +264,13 @@ It calls each analysis tool once and prints PASS, FAIL or SKIP for each. An agen
 For the maintainer. A release is a version tag. GitHub Actions builds and publishes it when the tag is pushed.
 
 1. If you want hand-written release notes, add a `## vX.Y.Z` section to [RELEASE_NOTES.md](RELEASE_NOTES.md) in a normal pull request, written for the people installing the extension, and merge it first.
-2. On `main`, run `npm run release`. This releases the next patch version. To pick the version, run `npm run release -- minor`, `npm run release -- major` or `npm run release -- 1.4.0`. For the very first release, when no tags exist yet, the version comes from `package.json`.
-3. It checks that you are on an up-to-date `main` with no uncommitted changes, and that the tests pass.
-4. It shows the last release and the changes since then, and asks you to confirm.
+2. On `main`, run `npm run release`. This releases the next patch version, the same as `npm run release -- patch`. To pick the version, run `npm run release -- minor`, `npm run release -- major` or `npm run release -- 1.4.0`. For the very first release, when no tags exist yet, the version comes from `package.json`.
+3. It checks that you are on an up-to-date `main` with no uncommitted changes, that `main` has changes since the last release, and that the tests pass.
+4. It shows the last release, the changes since then and where the release notes will come from, and asks you to confirm. `npm run release -- --yes` skips the question.
 5. It creates an annotated tag `vX.Y.Z` with the release date and pushes only the tag. No version-bump commit or pull request is needed.
-6. The Release workflow runs on the tag. It runs the tests, builds both `.mcpb` files with the version taken from the tag, and publishes the GitHub Release titled `vX.Y.Z`. The notes come from the `## vX.Y.Z` section of RELEASE_NOTES.md if there is one. Otherwise GitHub generates them from the merged pull requests.
+6. The Release workflow runs on the tag. It checks that the tag points at a commit on `main`, runs the tests, builds both `.mcpb` files with the version taken from the tag, and publishes the GitHub Release titled `vX.Y.Z`. The notes come from the `## vX.Y.Z` section of RELEASE_NOTES.md if there is one. Otherwise GitHub generates them from the merged pull requests.
 
-Only the maintainer can push `v*` tags.
+Only the maintainer can push `v*` tags, and release tags can only point at commits on `main`. Both ends check this: `npm run release` refuses unless you are on an up-to-date `main` with a clean working tree, and the Release workflow fails before building anything if the tagged commit isn't on `main`.
 
 If the Release workflow fails after it has created the GitHub Release, for example during an upload, delete that release on GitHub but keep the tag, then re-run the workflow. A re-run fails while the release still exists.
 

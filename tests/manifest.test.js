@@ -13,8 +13,3 @@ test('manifest lists exactly the tools the server offers', () => {
 test('manifest and package.json versions match', () => {
   assert.equal(readJson('manifest.json').version, readJson('package.json').version);
 });
-
-test('release notes cover the current version', () => {
-  const version = readJson('package.json').version;
-  assert.match(readFileSync(new URL('../RELEASE_NOTES.md', import.meta.url), 'utf8'), new RegExp(`^## v${version.replace(/\./g, '\\.')}$`, 'm'));
-});

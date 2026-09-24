@@ -3,11 +3,19 @@
   "name": "zendesk-mcp-server",
   "display_name": "Zendesk",
   "version": "1.1.0",
-  "description": "Search and manage Zendesk tickets, users, organizations, and Help Center articles.",
+  "description": "Read and analyze Zendesk tickets, conversations and Help Center articles, and export tickets for analysis. Read-only by default.",
   "long_description": "Connects Claude to your Zendesk account. Read-only mode is on by default: Claude can look things up but can't create, change, or delete anything. Turn it off in the extension settings only if you need Claude to make changes.",
   "author": {
-    "name": "N2WS"
+    "name": "N2WS",
+    "url": "https://github.com/NikolayChernuhaN2W"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NikolayChernuhaN2W/zendesk-mcp-server"
+  },
+  "homepage": "https://github.com/NikolayChernuhaN2W/zendesk-mcp-server",
+  "documentation": "https://github.com/NikolayChernuhaN2W/zendesk-mcp-server#readme",
+  "support": "https://github.com/NikolayChernuhaN2W/zendesk-mcp-server/issues",
   "server": {
     "type": "node",
     "entry_point": "src/index.js",
@@ -243,7 +251,11 @@
   "keywords": [
     "zendesk",
     "support",
-    "tickets"
+    "tickets",
+    "help-center",
+    "customer-support",
+    "mcp",
+    "claude"
   ],
   "license": "MIT",
   "user_config": {

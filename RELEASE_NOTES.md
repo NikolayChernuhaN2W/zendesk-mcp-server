@@ -21,7 +21,7 @@ This release makes Claude much better at analyzing your tickets and Help Center,
 
 ### Updating
 
-Download the new `.mcpb` file and double-click it with Claude Desktop open. Your settings are kept.
+Download the new `.mcpb` file from the [Releases page](https://github.com/NikolayChernuhaN2W/zendesk-mcp-server/releases/latest) and double-click it with Claude Desktop open. Your settings are kept.
 
 ## v1.0.0
 

@@ -67,6 +67,14 @@
 
     It uses `FORGEJO_TOKEN` if set and asks for the token otherwise. Publishing a second variant for the same version adds it to the existing release. Commit and push first: the release is tagged at the current commit.
 
+    ### Checking against a real account
+
+    Before publishing a release, anyone with Zendesk access can run a quick read-only check. It never changes Zendesk data:
+    ```
+    ZENDESK_SUBDOMAIN=... ZENDESK_EMAIL=... ZENDESK_API_TOKEN=... node scripts/smoke-check.mjs
+    ```
+    It calls each analysis tool once and prints PASS, FAIL or SKIP for each. An agent token is enough.
+
     ### Testing with MCP Inspector
 
     Test the server using the MCP Inspector:

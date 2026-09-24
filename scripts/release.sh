@@ -65,37 +65,39 @@ prepare() {
   local version
   version=$(parse_version "$1") || exit 1
 
-  # npm version updates package-lock.json, but rewrites package.json with its
-  # own indentation. Put package.json back as it was, with only the version
-  # line changed.
+  # Work out the new package.json and manifest.json before changing anything,
+  # so a refusal leaves the tree untouched. npm version updates
+  # package-lock.json but rewrites package.json with its own indentation, so
+  # package.json is then put back with only its version line changed.
+  # manifest.json is written as 2-space JSON, so rewriting it only changes the
+  # version line; refuse rather than reformat it if that ever stops holding.
   # Global, so the EXIT trap can still see it
-  original=$(mktemp)
-  trap 'rm -f "$original"' EXIT
-  cp package.json "$original"
-  npm version "$version" --no-git-tag-version --allow-same-version >/dev/null
+  staged=$(mktemp -d)
+  trap 'rm -rf "$staged"' EXIT
   node -e "
     const fs = require('fs');
-    const [original, version] = process.argv.slice(1);
-    const text = fs.readFileSync(original, 'utf8');
-    const old = JSON.parse(text).version;
-    const updated = text.replace('\"version\": ' + JSON.stringify(old), '\"version\": ' + JSON.stringify(version));
-    if (JSON.parse(updated).version !== version) throw new Error('could not set the version in package.json');
-    fs.writeFileSync('package.json', updated);
-  " "$original" "$version"
+    const [staged, version] = process.argv.slice(1);
+    const fail = message => { console.error('release: ' + message); process.exit(1); };
 
-  # manifest.json is written with 2-space JSON, so rewriting it only changes
-  # the version line. Refuse rather than reformat it if that ever stops holding.
-  node -e "
-    const fs = require('fs');
-    const text = fs.readFileSync('manifest.json', 'utf8');
-    const m = JSON.parse(text);
-    if (JSON.stringify(m, null, 2) + '\n' !== text) {
-      console.error('release: manifest.json is not formatted as 2-space JSON; set its version by hand');
-      process.exit(1);
+    const pkgText = fs.readFileSync('package.json', 'utf8');
+    const old = JSON.parse(pkgText).version;
+    const pkgUpdated = pkgText.replace('\"version\": ' + JSON.stringify(old), '\"version\": ' + JSON.stringify(version));
+    if (JSON.parse(pkgUpdated).version !== version) fail('could not set the version in package.json; set it by hand');
+
+    const manifestText = fs.readFileSync('manifest.json', 'utf8');
+    const m = JSON.parse(manifestText);
+    if (JSON.stringify(m, null, 2) + '\n' !== manifestText) {
+      fail('manifest.json is not formatted as 2-space JSON; set its version by hand');
     }
-    m.version = process.argv[1];
-    fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2) + '\n');
-  " "$version"
+    m.version = version;
+
+    fs.writeFileSync(staged + '/package.json', pkgUpdated);
+    fs.writeFileSync(staged + '/manifest.json', JSON.stringify(m, null, 2) + '\n');
+  " "$staged" "$version" || exit 1
+
+  npm version "$version" --no-git-tag-version --allow-same-version >/dev/null
+  cp "$staged/package.json" package.json
+  cp "$staged/manifest.json" manifest.json
 
   echo "Set the version to $version in package.json, package-lock.json and manifest.json."
   if ! node scripts/release.mjs --notes "$version" >/dev/null 2>&1; then
@@ -132,7 +134,9 @@ tag() {
   local branch
   branch=$(git symbolic-ref --short -q HEAD || true)
   [ "$branch" = main ] || fail "tag runs on main, not ${branch:-a detached HEAD}. Merge the release PR, then: git switch main && git pull"
-  [ -z "$(git status --porcelain)" ] || fail "the working tree has uncommitted changes; commit or stash them first"
+  local changes
+  changes=$(git status --porcelain) || fail "couldn't read the working tree status"
+  [ -z "$changes" ] || fail "the working tree has uncommitted changes; commit or stash them first"
 
   git fetch --quiet origin main --tags || fail "couldn't fetch origin"
   [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] \
@@ -147,7 +151,9 @@ tag() {
 
   local name="v$version"
   ! git rev-parse -q --verify "refs/tags/$name" >/dev/null || fail "tag $name already exists locally"
-  [ -z "$(git ls-remote --tags origin "refs/tags/$name")" ] || fail "tag $name already exists on origin"
+  local remote_tag
+  remote_tag=$(git ls-remote --tags origin "refs/tags/$name") || fail "couldn't reach origin to check for tag $name"
+  [ -z "$remote_tag" ] || fail "tag $name already exists on origin"
 
   npm test >/dev/null 2>&1 || fail "npm test fails; run it to see why"
 
@@ -160,13 +166,16 @@ tag() {
 
   if [ "$yes" = false ]; then
     [ -t 0 ] || fail "no terminal to confirm on; pass --yes to tag without asking"
-    local answer
-    read -rp "Tag $short as $name and push it? [y/N] " answer
+    local answer=
+    read -rp "Tag $short as $name and push it? [y/N] " answer || true
     [[ $answer =~ ^[Yy]$ ]] || fail "not tagged"
   fi
 
   git tag -a "$name" -m "$name" -m "Released $(date -u +%F) from $sha"
-  git push origin "$name"
+  if ! git push origin "$name"; then
+    git tag -d "$name" >/dev/null
+    fail "push failed; the local tag was removed, so you can run tag again"
+  fi
 
   local url
   url=$(github_url)

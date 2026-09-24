@@ -49,24 +49,39 @@ test('release workflow runs on version tags and publishes with gh release create
 
 // ${{ }} inside a run: script is substituted before the shell sees it, so a
 // value like a tag name could inject commands. Values go through env: instead.
-// The check is deliberately simple: a `run:` line itself, and for `run: |`
-// every following line that is indented deeper than the `run:` key, must not
-// contain `${{`.
+// The check is deliberately simple: a `run:` line itself, and for a block
+// scalar (`run: |`, `|-`, `>`, `>+` ...) every following line that is
+// indented deeper than the `run:` key, must not contain `${{`. It returns the
+// offending lines.
+function interpolatedRunLines(yaml) {
+  const lines = yaml.split('\n');
+  const indent = line => line.match(/^ */)[0].length;
+  const found = [];
+  lines.forEach((line, index) => {
+    const run = line.match(/^\s*(?:- )?run:(.*)$/);
+    if (!run) return;
+    if (line.includes('${{')) found.push(`${index + 1}: ${line.trim()}`);
+    if (!/^[|>][-+]?\s*(#.*)?$/.test(run[1].trim())) return;
+    const keyIndent = line.indexOf('run:');
+    for (let next = index + 1; next < lines.length; next++) {
+      const body = lines[next];
+      if (body.trim() && indent(body) <= keyIndent) break;
+      if (body.includes('${{')) found.push(`${next + 1}: ${body.trim()}`);
+    }
+  });
+  return found;
+}
+
+test('the run: interpolation check catches ${{ }} in every kind of run: value', () => {
+  const step = (run, body) => `steps:\n  - name: x\n    run: ${run}\n${body}  - name: next\n    env:\n      A: \${{ github.ref }}\n`;
+  assert.deepEqual(interpolatedRunLines(step('|-', '      echo "${{ github.ref }}"\n')), ['4: echo "${{ github.ref }}"']);
+  assert.deepEqual(interpolatedRunLines(step('>', '      echo\n      ${{ github.ref }}\n')), ['5: ${{ github.ref }}']);
+  assert.deepEqual(interpolatedRunLines(step('echo ${{ github.ref }}', '')), ['3: run: echo ${{ github.ref }}']);
+  assert.deepEqual(interpolatedRunLines(step('| # comment', '      echo "$A"\n')), []);
+});
+
 test('workflows never interpolate ${{ }} inside run: scripts', () => {
   for (const path of ['.github/workflows/ci.yml', '.github/workflows/release.yml']) {
-    const lines = read(path).split('\n');
-    const indent = line => line.match(/^ */)[0].length;
-    lines.forEach((line, index) => {
-      const run = line.match(/^(\s*)(?:- )?run:(.*)$/);
-      if (!run) return;
-      assert.ok(!line.includes('${{'), `${path}:${index + 1}: ${line.trim()}`);
-      if (run[2].trim() !== '|') return;
-      const keyIndent = line.indexOf('run:');
-      for (let next = index + 1; next < lines.length; next++) {
-        const body = lines[next];
-        if (body.trim() && indent(body) <= keyIndent) break;
-        assert.ok(!body.includes('${{'), `${path}:${next + 1}: ${body.trim()}`);
-      }
-    });
+    assert.deepEqual(interpolatedRunLines(read(path)), [], path);
   }
 });

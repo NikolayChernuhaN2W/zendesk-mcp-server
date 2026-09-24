@@ -205,7 +205,7 @@
     },
     {
       "name": "search_articles",
-      "description": "Search Help Center articles by keyword. Returns titles, links and matching snippets; use get_article for an article's full text"
+      "description": "Search Help Center articles by keyword, or list the articles in a category, section or label. Returns titles, links and matching snippets; use get_article for an article's full text"
     },
     {
       "name": "get_help_center_structure",

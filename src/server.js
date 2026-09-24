@@ -1,12 +1,18 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+    import { createRequire } from 'node:module';
     import { zendeskClient } from './zendesk-client.js';
     import { allTools } from './tools/index.js';
     import { getAnnotations, selectTools } from './tool-registry.js';
 
+    // Read the version from package.json rather than hardcoding it here, so
+    // it can't drift out of sync. createRequire works on Node 18, where JSON
+    // import attributes aren't reliable yet.
+    const { version } = createRequire(import.meta.url)('../package.json');
+
     // Create an MCP server for Zendesk API
     const server = new McpServer({
       name: "Zendesk API",
-      version: "1.0.0",
+      version,
       description: "MCP Server for interacting with the Zendesk API"
     });
 

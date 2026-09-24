@@ -1,6 +1,6 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exportTools } from '../../src/tools/export.js';
@@ -9,7 +9,9 @@ import { getAnnotations, selectTools } from '../../src/tool-registry.js';
 import { findTool, resultJson, stubZendesk } from '../helpers.js';
 
 // Never write to the real export folder, even when one test runs alone
-process.env.ZENDESK_EXPORT_DIR = mkdtempSync(join(tmpdir(), 'zendesk-export-tool-'));
+const exportDir = mkdtempSync(join(tmpdir(), 'zendesk-export-tool-'));
+process.env.ZENDESK_EXPORT_DIR = exportDir;
+after(() => rmSync(exportDir, { recursive: true, force: true }));
 
 test('export_tickets exports through the Zendesk client', async t => {
   stubZendesk(t, { 'GET /search/export.json': { results: [{ id: 1, subject: 'A' }], meta: { has_more: false } } });

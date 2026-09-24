@@ -96,7 +96,7 @@ export async function exportTickets(client, { query, include_comments = false, f
   if (!state.query) throw new Error('query is required to start an export');
 
   const dir = exportDir();
-  mkdirSync(dir, { recursive: true });
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
   const path = join(dir, state.file);
 
   if (resume) {
@@ -107,7 +107,7 @@ export async function exportTickets(client, { query, include_comments = false, f
     // Created up front, even for zero results, so the caller always gets a
     // real file; 'wx' fails atomically if another export already claimed it
     try {
-      writeFileSync(path, '', { flag: 'wx' });
+      writeFileSync(path, '', { flag: 'wx', mode: 0o600 });
     } catch (error) {
       if (error.code === 'EEXIST') {
         throw new Error(`${state.file} already exists in the export folder. Choose another file name.`);

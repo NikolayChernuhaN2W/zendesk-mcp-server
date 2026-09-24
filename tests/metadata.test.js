@@ -11,10 +11,23 @@ const read = file => readFileSync(join(root, file), 'utf8');
 const readJson = file => JSON.parse(read(file));
 const repo = 'github.com/NikolayChernuhaN2W/zendesk-mcp-server';
 
-test('LICENSE is MIT and credits the original author', () => {
+test('LICENSE is MIT and credits both the original author and N2WS', () => {
   const license = read('LICENSE');
   assert.ok(license.startsWith('MIT License'));
-  assert.match(license, /Matt Coatsworth/);
+  assert.match(license, /Copyright \(c\) 2025 Matt Coatsworth/);
+  assert.match(license, /Copyright \(c\) 2026 N2WS/);
+});
+
+test('NOTICE credits the original author and explains it was unlicensed', () => {
+  const notice = read('NOTICE');
+  assert.match(notice, /Matt Coatsworth/);
+  assert.match(notice, /without a license/);
+});
+
+test('release.mjs stages LICENSE and NOTICE into the bundle', () => {
+  const release = read('scripts/release.mjs');
+  assert.match(release, /LICENSE/);
+  assert.match(release, /NOTICE/);
 });
 
 test('package.json and manifest.json are MIT licensed', () => {

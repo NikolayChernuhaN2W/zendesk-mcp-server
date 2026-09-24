@@ -18,7 +18,7 @@ import { z } from 'zod';
             const params = { sort_by, sort_order, page, per_page };
             const result = await zendeskClient.search(query, params);
             return jsonResult({
-              results: result.results.map(item => item.result_type === 'ticket' ? summarizeTicket(item) : item),
+              results: result.results.map(item => item.result_type === 'ticket' ? { ...summarizeTicket(item), result_type: 'ticket' } : item),
               count: result.count,
               next_page: result.next_page
             });

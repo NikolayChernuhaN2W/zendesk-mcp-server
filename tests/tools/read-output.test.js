@@ -37,6 +37,7 @@ test('search summarizes tickets and passes other result types through', async t 
   const output = resultJson(await findTool(searchTools, 'search').handler({ query: 'restore' }));
   assert.equal(output.results[0].url, undefined);
   assert.equal(output.results[0].subject, 'Restore failed');
+  assert.equal(output.results[0].result_type, 'ticket');
   assert.deepEqual(output.results[1], user);
 });
 

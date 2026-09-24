@@ -257,7 +257,7 @@ The tests never call Zendesk. Before a release, anyone with Zendesk access can r
 ZENDESK_SUBDOMAIN=... ZENDESK_EMAIL=... ZENDESK_API_TOKEN=... node scripts/smoke-check.mjs
 ```
 
-It calls each analysis tool once and prints PASS, FAIL or SKIP for each. An agent token is enough. The export check writes one small file to a temporary folder.
+It calls each analysis tool once and prints PASS, FAIL or SKIP for each. An agent token is enough. The export check exports tickets created in the last day to one small file in a temporary folder, which is deleted afterwards.
 
 ## Releasing
 
@@ -282,8 +282,8 @@ Changes go through pull requests to `main`. The CI `test` check must pass, and t
 
 ## Credits
 
-Originally created by Matt Coatsworth ([@mattcoatsworth](https://github.com/mattcoatsworth), [original repository](https://github.com/mattcoatsworth/zendesk-mcp-server)). This version is maintained by N2WS and adds read-only mode, the Claude Desktop extension, ticket conversations, Help Center search and structure, compact output, rate-limit retries and resumable exports.
+Originally created by Matt Coatsworth ([@mattcoatsworth](https://github.com/mattcoatsworth), [original repository](https://github.com/mattcoatsworth/zendesk-mcp-server)). This version is maintained by N2WS and adds read-only mode, the Claude Desktop extension, ticket conversations, Help Center search and structure, compact output, rate-limit retries and resumable exports. The original code was published without a license; see [NOTICE](NOTICE).
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT for the changes and additions made by N2WS, see [LICENSE](LICENSE). See [NOTICE](NOTICE) for the status of the original code.

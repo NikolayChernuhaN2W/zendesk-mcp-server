@@ -84,6 +84,12 @@ function build({ allowWrites, version }) {
     cpSync(join(root, 'src'), join(stage, 'src'), { recursive: true });
     cpSync(join(root, 'package.json'), join(stage, 'package.json'));
     cpSync(join(root, 'package-lock.json'), join(stage, 'package-lock.json'));
+    cpSync(join(root, 'LICENSE'), join(stage, 'LICENSE'));
+    cpSync(join(root, 'NOTICE'), join(stage, 'NOTICE'));
+    // The staged package.json's version must agree with the manifest and the
+    // server's own serverInfo (read from package.json at run time), so an
+    // explicit --version has to land there too, not just in the manifest
+    if (version) writeFileSync(join(stage, 'package.json'), JSON.stringify({ ...pkg, version }, null, 2) + '\n');
     writeFileSync(join(stage, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
     console.log('Installing production dependencies...');

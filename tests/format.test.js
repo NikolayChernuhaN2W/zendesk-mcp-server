@@ -14,6 +14,12 @@ test('htmlToText strips tags, keeps structure, decodes entities', () => {
   assert.equal(htmlToText('<p dir="ltr">Step one.</p><p class="x">Step two.</p>'), 'Step one.\n\nStep two.');
 });
 
+test('htmlToText leaves out-of-range numeric entities unchanged instead of throwing', () => {
+  assert.equal(htmlToText('&#x110000;'), '&#x110000;');
+  assert.equal(htmlToText('&#99999999;'), '&#99999999;');
+  assert.equal(htmlToText('Before &#x110000; after'), 'Before &#x110000; after');
+});
+
 test('truncate shortens long text and says how much was cut', () => {
   assert.equal(truncate('abcdef', 3), 'abc… [3 more characters]');
   assert.equal(truncate('abc', 3), 'abc');

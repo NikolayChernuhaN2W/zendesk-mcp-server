@@ -16,7 +16,9 @@ export function htmlToText(html) {
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
       if (entity[0] === '#') {
         const hex = entity[1].toLowerCase() === 'x';
-        return String.fromCodePoint(parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10));
+        const codePoint = parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
+        if (!Number.isFinite(codePoint) || codePoint < 0 || codePoint > 0x10FFFF) return match;
+        return String.fromCodePoint(codePoint);
       }
       return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
     })

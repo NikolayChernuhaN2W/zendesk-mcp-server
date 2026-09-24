@@ -1,14 +1,15 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { appendFileSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exportTickets, safeFileName } from '../src/export.js';
 
 let dir;
-beforeEach(() => {
+beforeEach(t => {
   dir = mkdtempSync(join(tmpdir(), 'zendesk-export-test-'));
   process.env.ZENDESK_EXPORT_DIR = dir;
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
 });
 
 const ticket = id => ({ id, subject: `Ticket ${id}`, status: 'open', url: `https://x/${id}` });
@@ -72,6 +73,16 @@ test('exports every page to JSON Lines', async () => {
     { query: 'status:open', 'filter[type]': 'ticket', 'page[size]': 100 },
     { query: 'status:open', 'filter[type]': 'ticket', 'page[size]': 100, 'page[after]': 'p1' }
   ]);
+});
+
+test('creates the export folder and files with restrictive permissions', { skip: process.platform === 'win32' }, async () => {
+  const nested = join(dir, 'nested');
+  process.env.ZENDESK_EXPORT_DIR = nested;
+  const client = fakeClient([{ results: [ticket(1)], meta: { has_more: false } }]);
+  const result = await exportTickets(client, { query: 'x', file_name: 'perm' });
+
+  assert.equal(statSync(nested).mode & 0o777, 0o700);
+  assert.equal(statSync(result.file).mode & 0o777, 0o600);
 });
 
 test('can include each ticket\'s conversation', async () => {

@@ -4,7 +4,7 @@
 // export check writes one small file to a temporary folder.
 //
 // Usage: ZENDESK_SUBDOMAIN=... ZENDESK_EMAIL=... ZENDESK_API_TOKEN=... node scripts/smoke-check.mjs
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,7 +33,7 @@ export async function runSmokeCheck(tools, { log = console.log } = {}) {
       output => Array.isArray(output.articles) ? null : 'no articles array'],
     ['get_help_center_structure', () => call(tools, 'get_help_center_structure', { include_article_counts: false }),
       output => Array.isArray(output.categories) && output.totals ? null : 'no categories tree'],
-    ['export_tickets', () => call(tools, 'export_tickets', { query: 'created>2000-01-01', file_name: 'smoke-check' }),
+    ['export_tickets', () => call(tools, 'export_tickets', { query: 'created>1day', file_name: 'smoke-check' }),
       output => typeof output.written === 'number' && typeof output.done === 'boolean' ? null : 'no export progress']
   ];
 
@@ -59,9 +59,14 @@ export async function runSmokeCheck(tools, { log = console.log } = {}) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  process.env.ZENDESK_EXPORT_DIR = mkdtempSync(join(tmpdir(), 'zendesk-smoke-'));
-  const { allTools } = await import('../src/tools/index.js');
-  const { passed, failed } = await runSmokeCheck(allTools);
-  console.log(`\n${passed} passed, ${failed} failed`);
-  process.exit(failed ? 1 : 0);
+  const dir = mkdtempSync(join(tmpdir(), 'zendesk-smoke-'));
+  process.env.ZENDESK_EXPORT_DIR = dir;
+  try {
+    const { allTools } = await import('../src/tools/index.js');
+    const { passed, failed } = await runSmokeCheck(allTools);
+    console.log(`\n${passed} passed, ${failed} failed`);
+    process.exitCode = failed ? 1 : 0;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }

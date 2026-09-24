@@ -1,0 +1,8 @@
+Zendesk MCP Server
+Copyright (c) 2026 N2WS
+
+This project is based on the original zendesk-mcp-server by Matt Coatsworth
+(https://github.com/mattcoatsworth/zendesk-mcp-server), which was published
+without a license. The MIT License in LICENSE covers the changes and additions
+made by N2WS. It does not grant any rights to the original code on behalf of
+its author.

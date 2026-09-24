@@ -1,0 +1,70 @@
+name: Release
+
+# Runs when the maintainer pushes a version tag with `npm run release`.
+# The tag is the version.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency: release-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: current
+          cache: npm
+      # GitHub's tag rules can't restrict tags by branch, so check it here
+      - name: Check the tag is on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Release tags must point at a commit on main. $GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main."
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm test
+      - name: Take the version from the tag
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if ! parsed=$(node --input-type=module -e "
+            import { parseVersion } from './scripts/release-lib.mjs';
+            try { console.log(parseVersion(process.argv[1])); }
+            catch (error) { console.log(error.message); process.exit(1); }
+          " "$version"); then
+            echo "::error::$parsed"
+            exit 1
+          fi
+          echo "version=$parsed" >> "$GITHUB_OUTPUT"
+      - name: Build both variants
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node scripts/release.mjs --version "$VERSION"
+          node scripts/release.mjs --version "$VERSION" --allow-writes
+      - name: Publish the GitHub Release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Hand-written notes from RELEASE_NOTES.md, or GitHub's list of merged PRs
+          if node scripts/release.mjs --notes "$VERSION" > "$RUNNER_TEMP/release-notes.md"; then
+            notes=(--notes-file "$RUNNER_TEMP/release-notes.md")
+          else
+            notes=(--generate-notes)
+          fi
+          prerelease=()
+          case "$VERSION" in *-*) prerelease=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/*.mcpb --verify-tag \
+            --title "$GITHUB_REF_NAME" "${notes[@]}" "${prerelease[@]}"

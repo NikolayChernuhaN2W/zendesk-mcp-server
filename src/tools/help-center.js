@@ -1,5 +1,49 @@
 import { z } from 'zod';
     import { zendeskClient } from '../zendesk-client.js';
+    import { jsonResult, summarizeArticle } from '../format.js';
+    import { collectPages } from '../pagination.js';
+
+    function byPosition(a, b) {
+      return (a.position ?? 0) - (b.position ?? 0);
+    }
+
+    // Per-section article counts: { articles, drafts, last_updated }
+    function countArticles(articles) {
+      const counts = new Map();
+      for (const article of articles) {
+        const count = counts.get(article.section_id) || { articles: 0, drafts: 0 };
+        count.articles++;
+        if (article.draft) count.drafts++;
+        if (!count.last_updated || article.updated_at > count.last_updated) count.last_updated = article.updated_at;
+        counts.set(article.section_id, count);
+      }
+      return counts;
+    }
+
+    // Categories → sections → subsections; counts is null when not requested
+    function buildTree(categories, sections, counts) {
+      const sectionNode = section => {
+        const children = sections.filter(child => child.parent_section_id === section.id).sort(byPosition).map(sectionNode);
+        return {
+          id: section.id,
+          name: section.name,
+          html_url: section.html_url,
+          ...(counts ? (counts.get(section.id) || { articles: 0, drafts: 0 }) : {}),
+          ...(children.length ? { sections: children } : {})
+        };
+      };
+
+      return [...categories].sort(byPosition).map(category => {
+        const topLevel = sections.filter(section => section.category_id === category.id && !section.parent_section_id);
+        const children = topLevel.sort(byPosition).map(sectionNode);
+        return {
+          id: category.id,
+          name: category.name,
+          html_url: category.html_url,
+          ...(children.length ? { sections: children } : {})
+        };
+      });
+    }
 
     export const helpCenterTools = [
       {
@@ -15,12 +59,11 @@ import { z } from 'zod';
           try {
             const params = { page, per_page, sort_by, sort_order };
             const result = await zendeskClient.listArticles(params);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult({
+              articles: result.articles.map(article => summarizeArticle(article)),
+              count: result.count,
+              next_page: result.next_page
+            });
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error listing articles: ${error.message}` }],
@@ -33,20 +76,87 @@ import { z } from 'zod';
         name: "get_article",
         description: "Get a specific Help Center article by ID",
         schema: {
-          id: z.number().describe("Article ID")
+          id: z.number().describe("Article ID"),
+          raw: z.boolean().optional().describe("Return the full Zendesk API object (HTML body) instead of a summary")
         },
-        handler: async ({ id }) => {
+        handler: async ({ id, raw = false }) => {
           try {
             const result = await zendeskClient.getArticle(id);
-            return {
-              content: [{ 
-                type: "text", 
-                text: JSON.stringify(result, null, 2)
-              }]
-            };
+            return jsonResult(raw ? result : summarizeArticle(result.article, { bodyLength: Infinity }));
           } catch (error) {
             return {
               content: [{ type: "text", text: `Error getting article: ${error.message}` }],
+              isError: true
+            };
+          }
+        }
+      },
+      {
+        name: "search_articles",
+        description: "Search Help Center articles by keyword, or list the articles in a category, section or label. Returns titles, links and matching snippets; use get_article for an article's full text",
+        schema: {
+          query: z.string().optional().describe("Words to search for (optional if category_id, section_id or label_names is given)"),
+          locale: z.string().optional().describe("Only articles in this locale, e.g. 'en-us'"),
+          category_id: z.number().optional().describe("Only articles in this category"),
+          section_id: z.number().optional().describe("Only articles in this section"),
+          label_names: z.array(z.string()).optional().describe("Only articles with any of these labels (Professional and Enterprise plans only)"),
+          updated_after: z.string().optional().describe("Only articles updated after this date (YYYY-MM-DD)"),
+          page: z.number().optional().describe("Page number for pagination"),
+          per_page: z.number().optional().describe("Number of articles per page (max 100)")
+        },
+        handler: async ({ query, locale, category_id, section_id, label_names, updated_after, page, per_page }) => {
+          try {
+            if (!query && !category_id && !section_id && !label_names?.length) throw new Error('pass at least one of query, category_id, section_id or label_names');
+            const result = await zendeskClient.searchArticles({
+              query,
+              locale,
+              category: category_id,
+              section: section_id,
+              label_names: label_names?.join(','),
+              updated_after,
+              page,
+              per_page
+            });
+            return jsonResult({
+              articles: result.results.map(article => summarizeArticle(article)),
+              count: result.count,
+              next_page: result.next_page
+            });
+          } catch (error) {
+            return {
+              content: [{ type: "text", text: `Error searching articles: ${error.message}` }],
+              isError: true
+            };
+          }
+        }
+      },
+      {
+        name: "get_help_center_structure",
+        description: "Get the Help Center's categories, sections and subsections as a tree, with article counts and last-updated dates per section, to see which areas are thin or stale",
+        schema: {
+          include_article_counts: z.boolean().optional().describe("Count articles per section (default true; lists every article, so slower on large Help Centers)")
+        },
+        handler: async ({ include_article_counts = true }) => {
+          try {
+            const [categories, sections] = await Promise.all([
+              collectPages(params => zendeskClient.listCategories(params), 'categories'),
+              collectPages(params => zendeskClient.listSections(params), 'sections')
+            ]);
+            const articles = include_article_counts
+              ? (await collectPages(params => zendeskClient.listArticles(params), 'articles')).items
+              : null;
+
+            return jsonResult({
+              categories: buildTree(categories.items, sections.items, articles && countArticles(articles)),
+              totals: {
+                categories: categories.items.length,
+                sections: sections.items.length,
+                ...(articles ? { articles: articles.length } : {})
+              }
+            });
+          } catch (error) {
+            return {
+              content: [{ type: "text", text: `Error getting Help Center structure: ${error.message}` }],
               isError: true
             };
           }

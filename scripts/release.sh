@@ -38,7 +38,7 @@ release_lib() {
     const args = process.argv.slice(1);
     try { $snippet }
     catch (error) { console.error('release: ' + error.message); process.exit(1); }
-  " "$@"
+  " -- "$@"
 }
 
 build() {
@@ -76,6 +76,8 @@ release() {
   for option in "$@"; do
     case "$option" in
       --yes) yes=true ;;
+      -h|--help) usage 0 ;;
+      -*) fail "unknown option: $option" ;;
       *) [ -z "$arg" ] || usage; arg=$option ;;
     esac
   done
@@ -92,6 +94,7 @@ release() {
     case "$parsed" in
       kind\ *) kind=${parsed#kind } ;;
       version\ *) explicit=${parsed#version } ;;
+      *) fail "couldn't check the release argument: $arg" ;;
     esac
   fi
 
@@ -107,9 +110,11 @@ release() {
   [ "$ahead" -eq 0 ] || fail "main has $ahead commit(s) that aren't on origin/main; push them through a PR first"
   [ "$behind" -eq 0 ] || fail "main is $behind commit(s) behind origin/main; run git pull first"
 
-  # 2. The version: the tag is the version, so work it out from the tags
+  # 2. The version: the tag is the version, so work it out from the tags on
+  # origin (a stray local tag doesn't count)
   local tags plan latest version
-  tags=$(git tag -l 'v*') || fail "couldn't list the tags"
+  tags=$(git ls-remote --tags --refs origin 'v*') || fail "couldn't list the tags on origin"
+  tags=$(printf '%s\n' "$tags" | sed -n 's|^.*[[:space:]]refs/tags/||p')
   plan=$(release_lib "
     const [tags, kind, explicit] = args;
     const latest = lib.latestVersion(tags.split('\n').filter(Boolean));
@@ -168,8 +173,8 @@ release() {
   # 7. Confirmation
   if [ "$yes" = false ]; then
     [ -t 0 ] || fail "no terminal to confirm on; pass --yes to release without asking"
-    local answer=
-    read -rp "Release $name? [y/N] " answer || true
+    local answer
+    if ! read -rp "Release $name? [y/N] " answer; then answer=; fi
     [[ $answer =~ ^[Yy]$ ]] || fail "not released"
   fi
 

@@ -14,10 +14,10 @@
 //   --notes X.Y.Z      Print the "## vX.Y.Z" section of RELEASE_NOTES.md and
 //                      exit, without building.
 //
-// Releases are published by GitHub Actions: `scripts/release.sh prepare`
-// sets the version for a PR, and after it merges `scripts/release.sh tag`
-// pushes a v<version> tag. The release workflow then builds both variants
-// and creates the GitHub Release with that version's notes.
+// Releases are published by GitHub Actions: on an up-to-date main,
+// `npm run release [-- patch|minor|major|X.Y.Z]` tags the next version and
+// pushes only the tag. The release workflow then builds both variants with
+// --version from the tag and creates the GitHub Release with its notes.
 import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

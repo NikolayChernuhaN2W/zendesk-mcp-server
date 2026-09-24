@@ -270,7 +270,7 @@ For the maintainer. A release is a version tag. GitHub Actions builds and publis
 5. It creates an annotated tag `vX.Y.Z` with the release date and pushes only the tag. No version-bump commit or pull request is needed.
 6. The Release workflow runs on the tag. It checks that the tag points at a commit on `main`, runs the tests, builds both `.mcpb` files with the version taken from the tag, and publishes the GitHub Release titled `vX.Y.Z`. The notes come from the `## vX.Y.Z` section of RELEASE_NOTES.md if there is one. Otherwise GitHub generates them from the merged pull requests.
 
-Only the maintainer can push `v*` tags, and release tags can only point at commits on `main`. Both ends check this: `npm run release` refuses unless you are on an up-to-date `main` with a clean working tree, and the Release workflow fails before building anything if the tagged commit isn't on `main`.
+Only the maintainer can push `v*` tags, and release tags can only point at commits on `main`. Both ends check this: `npm run release` refuses unless you are on an up-to-date `main` with a clean working tree, and the Release workflow fails before building anything if the tagged commit isn't on `main`. That workflow check runs from the `release.yml` in the tagged commit, which is one reason only the maintainer can push tags.
 
 If the Release workflow fails after it has created the GitHub Release, for example during an upload, delete that release on GitHub but keep the tag, then re-run the workflow. A re-run fails while the release still exists.
 

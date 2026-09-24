@@ -32,6 +32,7 @@
     4. Optionally, restrict what the server can do:
        - `ZENDESK_READ_ONLY=true` registers only read tools (list, get, search); every create, update and delete tool is left out.
        - `ZENDESK_ALLOW_ADMIN_ROLE=true` lets `create_user` and `update_user` grant the `admin` role. It is off by default.
+       - `ZENDESK_EXPORT_DIR=/path` sets where `export_tickets` saves files (default `~/Zendesk exports`).
 
        Ticket and article content is written by customers and can contain prompt-injection attempts. Use read-only mode unless you need writes, and use an API token from the least-privileged account that works.
 
@@ -78,6 +79,7 @@
     ### Tickets
     - `list_tickets`: List tickets in Zendesk
     - `get_ticket`: Get a specific ticket by ID
+    - `get_ticket_comments`: Get a ticket's full conversation (replies and internal notes) as plain text
     - `create_ticket`: Create a new ticket
     - `update_ticket`: Update an existing ticket
     - `delete_ticket`: Delete a ticket
@@ -137,6 +139,8 @@
     ### Help Center
     - `list_articles`: List Help Center articles
     - `get_article`: Get a specific Help Center article by ID
+    - `search_articles`: Search Help Center articles by keyword
+    - `get_help_center_structure`: Categories, sections and per-section article counts
     - `create_article`: Create a new Help Center article
     - `update_article`: Update an existing Help Center article
     - `delete_article`: Delete a Help Center article
@@ -146,6 +150,9 @@
 
     ### Chat
     - `list_chats`: List chat and messaging conversations (found as tickets via search)
+
+    ### Export
+    - `export_tickets`: Export tickets matching a search to a JSON Lines file in the export folder (`ZENDESK_EXPORT_DIR`, default `~/Zendesk exports`); resumable for large exports
 
     ## Available Resources
 

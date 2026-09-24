@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "zendesk-mcp-server",
   "display_name": "Zendesk",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Search and manage Zendesk tickets, users, organizations, and Help Center articles.",
   "long_description": "Connects Claude to your Zendesk account. Read-only mode is on by default: Claude can look things up but can't create, change, or delete anything. Turn it off in the extension settings only if you need Claude to make changes.",
   "author": {
@@ -34,6 +34,10 @@
     {
       "name": "get_ticket",
       "description": "Get a specific ticket by ID"
+    },
+    {
+      "name": "get_ticket_comments",
+      "description": "Get the conversation on a ticket: every public reply and internal note, oldest first, as plain text with author names"
     },
     {
       "name": "create_ticket",
@@ -200,6 +204,14 @@
       "description": "Get a specific Help Center article by ID"
     },
     {
+      "name": "search_articles",
+      "description": "Search Help Center articles by keyword. Returns titles, links and matching snippets; use get_article for an article's full text"
+    },
+    {
+      "name": "get_help_center_structure",
+      "description": "Get the Help Center's categories, sections and subsections as a tree, with article counts and last-updated dates per section, to see which areas are thin or stale"
+    },
+    {
       "name": "create_article",
       "description": "Create a new Help Center article"
     },
@@ -222,6 +234,10 @@
     {
       "name": "list_chats",
       "description": "List Zendesk Chat conversations"
+    },
+    {
+      "name": "export_tickets",
+      "description": "Export every ticket matching a Zendesk search to a JSON Lines file in the export folder, one ticket per line, for analyzing more tickets than fit in a conversation. Large exports take several calls: while done is false, call again with only the returned resume value."
     }
   ],
   "keywords": [

@@ -1,5 +1,28 @@
 # Release notes
 
+## v1.1.0
+
+This release makes Claude much better at analyzing your tickets and Help Center, and all of it works in read-only mode.
+
+### What's new
+
+- **Full ticket conversations.** Claude can now read every reply and internal note on a ticket, not just the first message, and sees who wrote each one.
+- **Help Center search.** Ask things like "which articles cover restoring a volume?" and Claude searches your Help Center directly.
+- **Help Center overview.** Claude can see how your Help Center is organized and how many articles each section has, including when each section was last updated. Try "which sections of our Help Center are thin or out of date?"
+- **Exports for big questions.** For questions about hundreds or thousands of tickets, Claude can save the matching tickets to a file and analyze the file. This avoids the limit on how many tickets fit in one conversation. Exports go to the **Export folder** in the extension's settings (normally a folder called *Zendesk exports* in your home folder). If you use Claude Cowork, set it to the folder you use with Cowork so Claude can read the files.
+- **Faster, longer conversations.** Claude now gets a short summary of each ticket and article instead of everything Zendesk sends, so it can look at many more of them before a conversation gets too long.
+
+### Good to know
+
+- **Big exports come in batches.** A large export can take several minutes. Claude saves it in batches and keeps going on its own. Including full conversations makes exports much slower.
+- **Interrupted exports pick up where they stopped.** If an export stops partway, for example because Zendesk had a problem, Claude can continue it without saving any ticket twice. If Zendesk's results might be incomplete, Claude tells you.
+- **Claude may ask before exporting.** Because an export saves a file on your computer, Claude Desktop may ask your permission first, even in read-only mode. The export only reads from Zendesk and never changes anything there.
+- **Busy accounts may pause.** If your Zendesk account is busy, Claude may pause for a few seconds and retry. That's normal.
+
+### Updating
+
+Download the new `.mcpb` file and double-click it with Claude Desktop open. Your settings are kept.
+
 ## v1.0.0
 
 This is the first release of the Zendesk extension for Claude Desktop. Once it's installed, you can ask Claude about your Zendesk account in plain language, for example:

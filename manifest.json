@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "zendesk-mcp-server",
   "display_name": "Zendesk",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Read and analyze Zendesk tickets, conversations and Help Center articles, and export tickets for analysis. Read-only by default.",
   "long_description": "Connects Claude to your Zendesk account. Read-only mode is on by default: Claude can look things up but can't create, change, or delete anything. Turn it off in the extension settings only if you need Claude to make changes.",
   "author": {

@@ -33,13 +33,20 @@ import axios from 'axios';
 
         const url = `${this.getBaseUrl()}${endpoint}`;
         const headers = {
-          'Authorization': this.getAuthHeader(),
-          'Content-Type': 'application/json'
+          'Authorization': this.getAuthHeader()
         };
+        const config = { method, url, headers, params };
+        // Only send a body when there is one: axios would otherwise send the
+        // text "null", and some endpoints (Help Center search) reject a GET
+        // that has any body
+        if (data !== null && data !== undefined) {
+          config.data = data;
+          headers['Content-Type'] = 'application/json';
+        }
 
         for (let attempt = 0; ; attempt++) {
           try {
-            const response = await this.http({ method, url, headers, data, params });
+            const response = await this.http(config);
             return response.data;
           } catch (error) {
             const status = error.response?.status;
@@ -262,8 +269,10 @@ import axios from 'axios';
         return this.request('GET', '/help_center/articles/search.json', null, params);
       }
 
-      async createArticle(data, sectionId) {
-        return this.request('POST', `/help_center/sections/${sectionId}/articles.json`, { article: data });
+      async createArticle(data, sectionId, { notifySubscribers } = {}) {
+        const body = { article: data };
+        if (notifySubscribers !== undefined) body.notify_subscribers = notifySubscribers;
+        return this.request('POST', `/help_center/sections/${sectionId}/articles.json`, body);
       }
 
       async updateArticle(id, data) {

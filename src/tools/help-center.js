@@ -173,9 +173,10 @@ import { z } from 'zod';
           draft: z.boolean().optional().describe("Whether the article is a draft"),
           permission_group_id: z.number().optional().describe("Permission group ID for the article"),
           user_segment_id: z.number().optional().describe("User segment ID for the article"),
-          label_names: z.array(z.string()).optional().describe("Labels for the article")
+          label_names: z.array(z.string()).optional().describe("Labels for the article"),
+          notify_subscribers: z.boolean().optional().describe("Email the section's subscribers about the new article (Zendesk's default is true)")
         },
-        handler: async ({ title, body, section_id, locale, draft, permission_group_id, user_segment_id, label_names }) => {
+        handler: async ({ title, body, section_id, locale, draft, permission_group_id, user_segment_id, label_names, notify_subscribers }) => {
           try {
             const articleData = {
               title,
@@ -187,7 +188,7 @@ import { z } from 'zod';
               label_names
             };
             
-            const result = await zendeskClient.createArticle(articleData, section_id);
+            const result = await zendeskClient.createArticle(articleData, section_id, { notifySubscribers: notify_subscribers });
             return {
               content: [{ 
                 type: "text", 

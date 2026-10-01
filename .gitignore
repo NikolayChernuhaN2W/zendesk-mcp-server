@@ -1,5 +1,7 @@
 node_modules/
-.env
+.env*
+!.env.example
 dist/
 .superpowers/
 docs/superpowers/
+e2e/.state.json

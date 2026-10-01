@@ -259,6 +259,14 @@ ZENDESK_SUBDOMAIN=... ZENDESK_EMAIL=... ZENDESK_API_TOKEN=... node scripts/smoke
 
 It calls each analysis tool once and prints PASS, FAIL or SKIP for each. An agent token is enough. The export check exports tickets created in the last day to one small file in a temporary folder, which is deleted afterwards.
 
+For a fuller check, the end-to-end suite starts the real MCP server the way Claude Desktop does and calls every read tool through it, including label and section searches and a resumed export. Put your credentials in `.env` (copy [.env.example](.env.example)), then run:
+
+```sh
+npm run test:e2e
+```
+
+It always runs in read-only mode, whatever `.env` says, and exports to a temporary folder that it deletes afterwards. It skips itself when the credentials aren't set, so CI doesn't run it. Set `ZENDESK_E2E_LABEL` to search by a label your Help Center uses (default `ai_valid`).
+
 ## Releasing
 
 For the maintainer. A release is a version tag. GitHub Actions builds and publishes it when the tag is pushed.

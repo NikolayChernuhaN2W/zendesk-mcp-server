@@ -43,6 +43,7 @@
         "dev": "node --watch src/index.js",
         "inspect": "npx -y @modelcontextprotocol/inspector node src/index.js",
         "test": "node --test \"tests/**/*.test.js\"",
+        "test:e2e": "node --test --test-concurrency=1 \"e2e/**/*.e2e.test.js\"",
         "build:mcpb": "node scripts/release.mjs",
         "release": "scripts/release.sh"
       },

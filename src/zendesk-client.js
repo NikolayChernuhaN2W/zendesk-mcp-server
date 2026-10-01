@@ -33,13 +33,20 @@ import axios from 'axios';
 
         const url = `${this.getBaseUrl()}${endpoint}`;
         const headers = {
-          'Authorization': this.getAuthHeader(),
-          'Content-Type': 'application/json'
+          'Authorization': this.getAuthHeader()
         };
+        const config = { method, url, headers, params };
+        // Only send a body when there is one: axios would otherwise send the
+        // text "null", and some endpoints (Help Center search) reject a GET
+        // that has any body
+        if (data !== null && data !== undefined) {
+          config.data = data;
+          headers['Content-Type'] = 'application/json';
+        }
 
         for (let attempt = 0; ; attempt++) {
           try {
-            const response = await this.http({ method, url, headers, data, params });
+            const response = await this.http(config);
             return response.data;
           } catch (error) {
             const status = error.response?.status;

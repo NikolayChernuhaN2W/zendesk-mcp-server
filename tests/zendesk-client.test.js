@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import { zendeskClient } from '../src/zendesk-client.js';
 import { setProperty } from './helpers.js';
 
@@ -69,4 +70,42 @@ test('refuses to call Zendesk without credentials', async t => {
   setup(t, []);
   zendeskClient.apiToken = undefined; // restored by setup's setProperty
   await assert.rejects(zendeskClient.request('GET', '/tickets.json'), /credentials not configured/);
+});
+
+test('GET requests carry no body and no Content-Type', async t => {
+  const { requests } = setup(t, [{ ok: true }, { ok: true }]);
+  await zendeskClient.request('GET', '/help_center/articles/search.json', null, { label_names: 'ai_valid' });
+  assert.equal('data' in requests[0], false);
+  assert.equal(requests[0].headers['Content-Type'], undefined);
+
+  await zendeskClient.request('POST', '/tickets.json', { ticket: { subject: 'Hi' } });
+  assert.deepEqual(requests[1].data, { ticket: { subject: 'Hi' } });
+  assert.equal(requests[1].headers['Content-Type'], 'application/json');
+});
+
+// Zendesk's Help Center search rejects a GET with any body ("Request body
+// not accepted on GET request"), so check the bytes that actually go out
+test('a GET sends nothing in the request body on the wire', async t => {
+  const received = [];
+  const server = createServer((req, res) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      received.push({ body, contentLength: req.headers['content-length'], contentType: req.headers['content-type'] });
+      res.setHeader('Content-Type', 'application/json');
+      res.end('{"results":[]}');
+    });
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+
+  setProperty(t, zendeskClient, 'subdomain', 'acme');
+  setProperty(t, zendeskClient, 'email', 'a@b.c');
+  setProperty(t, zendeskClient, 'apiToken', 'token');
+  setProperty(t, zendeskClient, 'getBaseUrl', () => `http://127.0.0.1:${server.address().port}/api/v2`);
+
+  await zendeskClient.searchArticles({ label_names: 'ai_valid' });
+  assert.equal(received[0].body, '');
+  assert.equal(received[0].contentType, undefined);
+  assert.ok(!received[0].contentLength || received[0].contentLength === '0', `content-length was ${received[0].contentLength}`);
 });

@@ -1,6 +1,6 @@
 # Release notes
 
-## v1.1.0
+## v1.1.1
 
 This release makes Claude much better at analyzing your tickets and Help Center, and all of it works in read-only mode.
 
@@ -11,6 +11,10 @@ This release makes Claude much better at analyzing your tickets and Help Center,
 - **Help Center overview.** Claude can see how your Help Center is organized and how many articles each section has, including when each section was last updated. Try "which sections of our Help Center are thin or out of date?"
 - **Exports for big questions.** For questions about hundreds or thousands of tickets, Claude can save the matching tickets to a file and analyze the file. This avoids the limit on how many tickets fit in one conversation. Exports go to the **Export folder** in the extension's settings (normally a folder called *Zendesk exports* in your home folder). If you use Claude Cowork, set it to the folder you use with Cowork so Claude can read the files.
 - **Faster, longer conversations.** Claude now gets a short summary of each ticket and article instead of everything Zendesk sends, so it can look at many more of them before a conversation gets too long.
+
+### Fixed
+
+- **Help Center search works again.** Searching articles by label, keyword, category or section no longer fails with "Request body not accepted on GET request". If you tried an early 1.1.0 build and saw this error, update to this version.
 
 ### Good to know
 

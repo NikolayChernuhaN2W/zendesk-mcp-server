@@ -267,6 +267,18 @@ npm run test:e2e
 
 It always runs in read-only mode, whatever `.env` says, and exports to a temporary folder that it deletes afterwards. It skips itself when the credentials aren't set, so CI doesn't run it. Set `ZENDESK_E2E_LABEL` to search by a label your Help Center uses (default `ai_valid`).
 
+Write tools are tested in two ways:
+
+- **Every write tool** (create, update and delete) has a mocked contract test in `npm test`. These tests check the exact request each tool would send, without reaching Zendesk.
+- **Only the harmless writes** run against a real account, with `npm run test:e2e:writes`:
+  - a draft article, created without emailing subscribers
+  - a group
+  - an organization with no domains
+  - a macro that only adds the tag `e2e_test`
+  - a view that matches no ticket
+
+  Each record is named `[E2E TEST] zendesk-mcp-server (safe to delete)`. The first run creates them, and later runs update the same records, whose IDs are kept in the git-ignored `e2e/.state.json`. Nothing is ever deleted. The run ends by listing the records so you can remove them in Zendesk. Writes to tickets, users, triggers and automations, and every delete, are refused before any request is sent.
+
 ## Releasing
 
 For the maintainer. A release is a version tag. GitHub Actions builds and publishes it when the tag is pushed.

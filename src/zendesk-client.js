@@ -269,8 +269,10 @@ import axios from 'axios';
         return this.request('GET', '/help_center/articles/search.json', null, params);
       }
 
-      async createArticle(data, sectionId) {
-        return this.request('POST', `/help_center/sections/${sectionId}/articles.json`, { article: data });
+      async createArticle(data, sectionId, { notifySubscribers } = {}) {
+        const body = { article: data };
+        if (notifySubscribers !== undefined) body.notify_subscribers = notifySubscribers;
+        return this.request('POST', `/help_center/sections/${sectionId}/articles.json`, body);
       }
 
       async updateArticle(id, data) {

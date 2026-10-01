@@ -74,6 +74,9 @@ const cases = [
 
   ['create_article', { title: 'Art', body: '<p>B</p>', section_id: 15, draft: true },
     [['POST', '/help_center/sections/15/articles.json', { article: { title: 'Art', body: '<p>B</p>', draft: true } }]]],
+  // notify_subscribers sits next to the article, not inside it (Create Article API)
+  ['create_article', { title: 'Art', body: '<p>B</p>', section_id: 15, draft: true, notify_subscribers: false },
+    [['POST', '/help_center/sections/15/articles.json', { article: { title: 'Art' }, notify_subscribers: false }]]],
   // A title change goes to the article's translation, in its source locale
   ['update_article', { id: 16, title: 'New' }, [
     ['GET', '/help_center/articles/16.json'],
@@ -95,7 +98,7 @@ function assertContains(actual, expected, path) {
 
 test('every write tool is covered by a contract case', () => {
   const writeTools = allTools.map(tool => tool.name).filter(name => /^(create|update|delete)_/.test(name)).sort();
-  assert.deepEqual(cases.map(([name]) => name).sort(), writeTools);
+  assert.deepEqual([...new Set(cases.map(([name]) => name))].sort(), writeTools);
 });
 
 for (const [name, args, expected] of cases) {
